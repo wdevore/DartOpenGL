@@ -40,9 +40,18 @@ int main(List<String> arguments) {
   // render loop
   // -----------
   while (glfwWindowShouldClose(window) == GLFW_FALSE) {
+    // -----
     // input
     // -----
     processInput(window);
+
+    // ------
+    // render
+    // ------
+    glClearColor(0.2, 0.3, 0.3, 1);
+    glClear(GL_COLOR_BUFFER_BIT);
+
+    // -------------------------------------------------------------------------------
     // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
     // -------------------------------------------------------------------------------
     glfwSwapBuffers(window);
