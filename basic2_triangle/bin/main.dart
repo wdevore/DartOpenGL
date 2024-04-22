@@ -85,6 +85,8 @@ int main(List<String> arguments) {
   // ------------------------------------------------------------------
   // set up vertex data (and buffer(s)) and configure vertex attributes
   // ------------------------------------------------------------------
+  // For simplicity these coords are defined in NDCs rather than using matrices.
+  // -1 to 1 is the visible space.
   var vertices = [
     -0.5, -0.5, 0.0, // left
     0.5, -0.5, 0.0, // right
@@ -97,11 +99,40 @@ int main(List<String> arguments) {
   // bind the Vertex Array Object first, then bind and set vertex buffer(s),
   // and then configure vertex attributes(s).
   glBindVertexArray(vao);
+  // 0. copy our vertices array in a buffer for OpenGL to use
   glBindBuffer(GL_ARRAY_BUFFER, vbo);
-  gldtBufferFloat(GL_ARRAY_BUFFER, vertices, GL_STATIC_DRAW);
+  gldtBufferFloat(GL_ARRAY_BUFFER, vertices, GL_STATIC_DRAW); // glBufferData
+
+  // ~~~~ VAO ~~~~
+  // 1. then set the vertex attributes pointers
+  // Parameters:
+  // 1: Because we specified "layout (location = 0)" in the vertex shader
+  //    we use "0" to match location 0
+  // 2: The next argument specifies the size of the vertex attribute. The
+  //    vertex attribute is a vec3 so it is composed of 3 values.
+  // 3: The third argument specifies the type of the data which is GL_FLOAT
+  // 4: The next argument specifies if we want the data to be normalized. If
+  //    we're inputting integer data types (int, byte) and we've set this to
+  //    GL_TRUE, the integer data is normalized to 0 (or -1 for signed data)
+  //    and 1 when converted to float. This is not relevant for us so we'll
+  //    leave this at GL_FALSE.
+  // 5: The fifth argument is known as the stride and tells us the space between
+  //    consecutive vertex attributes. Since the next set of position data is
+  //    located exactly 3 times the size of a float away we specify that value
+  //    as the stride.
+  // 6: The last parameter is of type void* and thus requires that weird cast.
+  //    This is the offset of where the position data begins in the buffer.
+  //    Since the position data is at the start of the data array this value
+  //    is just 0.
   gldtVertexAttribPointer(
       0, 3, GL_FLOAT, GL_FALSE, 3 * sizeOf<Float>(), 0 * sizeOf<Float>());
+
+  // Parameters:
+  // 1: Because we specified "layout (location = 0)" in the vertex shader
+  //    we use "0" to match location 0
   glEnableVertexAttribArray(0);
+
+  // ~~~~ VBO ~~~~
   // note that this is allowed, the call to glVertexAttribPointer registered
   // VBO as the vertex attribute's bound vertex buffer object so afterwards we
   // can safely unbind
@@ -132,6 +163,7 @@ int main(List<String> arguments) {
     glClear(GL_COLOR_BUFFER_BIT);
 
     // draw our first triangle
+    // 2. use our shader program when we want to render an object
     glUseProgram(shaderProgram);
     // seeing as we only have a single VAO there's no need to bind it every
     // time, but we'll do so to keep things a bit more organized
