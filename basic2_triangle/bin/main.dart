@@ -94,24 +94,32 @@ int main(List<String> arguments) {
   var vao = gldtGenVertexArrays(1)[0];
   var vbo = gldtGenBuffers(1)[0];
 
-  // bind the Vertex Array Object first, then bind and set vertex buffer(s), and then configure vertex attributes(s).
+  // bind the Vertex Array Object first, then bind and set vertex buffer(s),
+  // and then configure vertex attributes(s).
   glBindVertexArray(vao);
   glBindBuffer(GL_ARRAY_BUFFER, vbo);
   gldtBufferFloat(GL_ARRAY_BUFFER, vertices, GL_STATIC_DRAW);
   gldtVertexAttribPointer(
       0, 3, GL_FLOAT, GL_FALSE, 3 * sizeOf<Float>(), 0 * sizeOf<Float>());
   glEnableVertexAttribArray(0);
-  // note that this is allowed, the call to glVertexAttribPointer registered VBO as the vertex attribute's bound vertex buffer object so afterwards we can safely unbind
+  // note that this is allowed, the call to glVertexAttribPointer registered
+  // VBO as the vertex attribute's bound vertex buffer object so afterwards we
+  // can safely unbind
   glBindBuffer(GL_ARRAY_BUFFER, 0);
-  // You can unbind the VAO afterwards so other VAO calls won't accidentally modify this VAO, but this rarely happens. Modifying other
-  // VAOs requires a call to glBindVertexArray anyways so we generally don't unbind VAOs (nor VBOs) when it's not directly necessary.
+  // You can unbind the VAO afterwards so other VAO calls won't accidentally
+  // modify this VAO, but this rarely happens. Modifying other VAOs requires a
+  // call to glBindVertexArray anyways so we generally don't unbind VAOs
+  // (nor VBOs) when it's not directly necessary.
   glBindVertexArray(0);
 
   // uncomment this call to draw polygons in wireframe.
   //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-  // -----------
+
+  glClearColor(0.2, 0.3, 0.3, 1);
+
+  // ******* ---------------------------- *******
   // render loop
-  // -----------
+  // ******* ---------------------------- *******
   while (glfwWindowShouldClose(window) == GLFW_FALSE) {
     // -----
     // input
@@ -121,24 +129,32 @@ int main(List<String> arguments) {
     // ------
     // render
     // ------
-    glClearColor(0.2, 0.3, 0.3, 1);
     glClear(GL_COLOR_BUFFER_BIT);
 
     // draw our first triangle
     glUseProgram(shaderProgram);
-    // seeing as we only have a single VAO there's no need to bind it every time, but we'll do so to keep things a bit more organized
+    // seeing as we only have a single VAO there's no need to bind it every
+    // time, but we'll do so to keep things a bit more organized
     glBindVertexArray(vao);
     glDrawArrays(GL_TRIANGLES, 0, 3);
 
     // no need to unbind it every time
     //glBindVertexArray(0);
 
-    // -------------------------------------------------------------------------------
-    // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
-    // -------------------------------------------------------------------------------
+    // -----------------------------------------------------------------------
+    // glfw: swap buffers and poll IO events (keys pressed/released,
+    // mouse moved etc.)
+    // -----------------------------------------------------------------------
     glfwSwapBuffers(window);
     glfwPollEvents();
   }
+
+  // ------------------------------------------------------------------------
+  // optional: de-allocate all resources once they've outlived their purpose:
+  // ------------------------------------------------------------------------
+  gldtDeleteVertexArrays([vao]);
+  gldtDeleteBuffers([vbo]);
+  glDeleteProgram(shaderProgram);
 
   // ------------------------------------------------------------------
   // glfw: terminate, clearing all previously allocated GLFW resources.
@@ -148,9 +164,10 @@ int main(List<String> arguments) {
   return 0;
 }
 
-// ---------------------------------------------------------------------------------------------------------
-// process all input: query GLFW whether relevant keys are pressed/released this frame and react accordingly
-// ---------------------------------------------------------------------------------------------------------
+// --------------------------------------------------------------------------
+// process all input: query GLFW whether relevant keys are pressed/released
+// this frame and react accordingly
+// --------------------------------------------------------------------------
 void processInput(Pointer<GLFWwindow> window) {
   if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
     glfwSetWindowShouldClose(window, GLFW_TRUE);
@@ -166,16 +183,3 @@ void framebufferSizeCallback(
   // height will be significantly larger than specified on retina displays.
   glViewport(0, 0, width, height);
 }
-
-// String _getPath() {
-//   final cjsonExamplePath = Directory.current.absolute.path;
-//   var path = p.join(cjsonExamplePath, '/usr/local/lib');
-//   if (Platform.isMacOS) {
-//     path = p.join(path, 'libcjson.dylib');
-//   } else if (Platform.isWindows) {
-//     path = p.join(path, 'Debug', 'cjson.dll');
-//   } else {
-//     path = p.join(path, 'libglfw.so');
-//   }
-//   return path;
-// }

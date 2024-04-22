@@ -1,20 +1,23 @@
-final gVertexShaderSource = """#version 330 core
-
-    layout (location = 0) in vec3 aPos;
-
-    void main()
-    {
-        gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);
-    }""";
-
-final gFragmentShaderSource = '#version 330 core'
+final gVertexShaderSource = '#version 400 core'
     '\n'
-    'out vec4 FragColor;'
+    'layout (location = 0) in vec3 aPos;'
     '\n'
     'void main()'
     '\n'
     '{'
     '\n'
-    '    FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);'
+    '    gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);'
+    '\n'
+    '}';
+
+final gFragmentShaderSource = '#version 400 core'
+    '\n'
+    'out vec4 fFragColor;'
+    '\n'
+    'void main()'
+    '\n'
+    '{'
+    '\n'
+    '    fFragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);'
     '\n'
     '}';

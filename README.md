@@ -20,6 +20,11 @@ dart create basic_template
 ```
 
 # GLFW
+Which version is installed:
+```sh
+pkg-config --list-all |grep -i glfw
+```
+
 finding .so library file:
 ```sh
 ldconfig -p | grep libglfw
@@ -44,6 +49,7 @@ Adding an entry to settings.json didn't seem to work:
     "name": "LD_LIBRARY_PATH", "value": "/usr/local/lib/"
 }
 ```
+
 However, adding an entry to my .bashrc file did:
 ```sh
 export LD_LIBRARY_PATH="/usr/local/lib"
