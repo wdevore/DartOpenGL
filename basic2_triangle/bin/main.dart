@@ -1,4 +1,5 @@
 import 'dart:ffi';
+import 'package:ffi/ffi.dart';
 import 'package:glew/glew.dart';
 import 'package:glfw3/glfw3.dart';
 
@@ -7,6 +8,19 @@ import 'shaders.dart';
 // settings
 const gScrWidth = 800;
 const gScrHeight = 600;
+
+late Pointer<NativeFunction<Void Function()>> _glGetIntegerv;
+
+int glGetIntegerv(int id) {
+  Pointer<Int32> attribs = calloc<Int32>();
+  final glGetIntegerv = _glGetIntegerv
+      .cast<NativeFunction<Void Function(Uint32 id, Pointer<Int32> attribs)>>()
+      .asFunction<void Function(int id, Pointer<Int32> attribs)>();
+  glGetIntegerv(id, attribs);
+  int attribsI = attribs.value;
+  calloc.free(attribs);
+  return attribsI;
+}
 
 int main(List<String> arguments) {
   // glfw: initialize and configure
@@ -37,6 +51,11 @@ int main(List<String> arguments) {
   // glad: load all OpenGL function pointers
   // ---------------------------------------
   gladLoadGLLoader(glfwGetProcAddress);
+
+  _glGetIntegerv = glfwGetProcAddress('glGetIntegerv');
+
+  int attribs = glGetIntegerv(GL_MAX_VERTEX_ATTRIBS);
+  print('Max attributes allowed: $attribs');
 
   // ------------------------------------
   // build and compile our shader program
