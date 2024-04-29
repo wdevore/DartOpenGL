@@ -9,6 +9,7 @@ dart create basic_template
 ```
 
 # Json launch entry
+Note: you need to update the "program" to reference the appropriate target.
 ```json
 {
     "name": "DartRunner",
