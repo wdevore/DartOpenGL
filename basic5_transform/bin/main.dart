@@ -85,28 +85,6 @@ int main(List<String> arguments) {
   // glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
   // gldtBufferUint32(GL_ELEMENT_ARRAY_BUFFER, indices, GL_STATIC_DRAW);
 
-  // ~~~~ VAO ~~~~
-  // 1. then set the vertex attributes pointers
-  // Parameters:
-  // 1: Because we specified "layout (location = 0)" in the vertex shader
-  //    we use "0" to match location 0
-  // 2: The next argument specifies the size of the vertex attribute. The
-  //    vertex attribute is a vec3 so it is composed of 3 values.
-  // 3: The third argument specifies the type of the data which is GL_FLOAT
-  // 4: The next argument specifies if we want the data to be normalized. If
-  //    we're inputting integer data types (int, byte) and we've set this to
-  //    GL_TRUE, the integer data is normalized to 0 (or -1 for signed data)
-  //    and 1 when converted to float. This is not relevant for us so we'll
-  //    leave this at GL_FALSE.
-  // 5: The fifth argument is known as the stride and tells us the space between
-  //    consecutive vertex attributes. Since the next set of position data is
-  //    located exactly 3 times the size of a float away we specify that value
-  //    as the stride.
-  // 6: The last parameter is of type void* and thus requires that weird cast.
-  //    This is the offset of where the position data begins in the buffer.
-  //    Since the position data is at the start of the data array this value
-  //    is just 0.
-
   // position atribute
   gldtVertexAttribPointer(
       0, 3, GL_FLOAT, GL_FALSE, 6 * sizeOf<Float>(), 0 * sizeOf<Float>());
