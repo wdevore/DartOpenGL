@@ -393,7 +393,6 @@ void cursorPosCallback(Pointer<GLFWwindow> window, double xpos, double ypos) {
 // ----------------------------------------------------------------------
 void scrollCallback(
     Pointer<GLFWwindow> window, double xoffset, double yoffset) {
-  print("heelll");
   gFov -= yoffset;
   if (gFov < 1.0) {
     gFov = 1.0;
