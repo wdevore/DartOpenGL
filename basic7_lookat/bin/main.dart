@@ -1,7 +1,10 @@
 import 'dart:ffi';
+import 'dart:math';
+import 'package:ffi/ffi.dart';
 import 'package:glew/glew.dart';
 import 'package:glfw3/glfw3.dart';
 import 'package:path/path.dart' as p;
+import 'package:sdl2/sdl2/ex/dart/native_type.dart';
 import 'package:vector_math/vector_math.dart';
 import 'dart:io' as io;
 
@@ -20,6 +23,16 @@ Vector3 gCameraPos = Vector3(0.0, 0.0, 3.0);
 Vector3 gCameraDir = Vector3(0.0, 0.0, -1.0);
 Vector3 gCameraUp = Vector3(0.0, 1.0, 0.0);
 Vector3 gCameraSide = Vector3(1.0, 0, 0);
+
+// --- Mouse
+var gLastX = gScrWidth / 2.0;
+var gLastY = gScrHeight / 2.0;
+
+var gMouseTracking = false;
+var gFirstMouse = true;
+var gYaw = -90.0;
+var gPitch = 0.0;
+var gFov = 45.0;
 
 enum RenderMode {
   wireFrame,
@@ -54,8 +67,18 @@ int main(List<String> arguments) {
       window, Pointer.fromFunction(framebufferSizeCallback));
 
   // --------------------
+  // Mouse callbacks
+  // --------------------
+  glfwSetCursorPosCallback(window, Pointer.fromFunction(cursorPosCallback));
+  glfwSetScrollCallback(window, Pointer.fromFunction(scrollCallback));
+  glfwSetMouseButtonCallback(window, Pointer.fromFunction(mouseButtonCallback));
+
+  // // Tell GLFW to capture our mouse
+  // glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+
+  // --------------------
   // glad: load all OpenGL function pointers
-  // ---------------------------------------
+  // --------------------
   gladLoadGLLoader(glfwGetProcAddress);
 
   // ------------------------------------
@@ -233,20 +256,15 @@ int main(List<String> arguments) {
 
     // --- create transformations
     var model = Matrix4.identity();
-    // model.rotate(Vector3(0.0, 1.0, 0.0), radians(-25.0));
+    model.rotate(Vector3(0.0, 1.0, 0.0), radians(15.0) * currentFrame);
     // model.translate(0.0, 1.0, 0.0);
 
     // --- View
-    // Vector3 target = Vector3(0.0, 0.0, 0.0); // Camera target
-    // Vector3 position = Vector3(3.0, 1.0, 3.0);// Camera position
-    // // var view = calcLookAt(position, target);
-    // var view = calcLookAt(gCameraPos, target);
-
     var view = makeViewMatrix(gCameraPos, gCameraPos + gCameraDir, gCameraUp);
 
     // --- Projection
     var projection = makePerspectiveMatrix(
-        radians(45.0), gScrWidth / gScrHeight, 0.1, 100.0);
+        radians(gFov), gScrWidth / gScrHeight, 0.1, 100.0);
 
     // --- use shader_m methods
     ourShader.setMatrix4('model', model);
@@ -332,7 +350,90 @@ void framebufferSizeCallback(
   glViewport(0, 0, width, height);
 }
 
+// glfw: whenever the mouse moves, this callback is called
+// -------------------------------------------------------
+void cursorPosCallback(Pointer<GLFWwindow> window, double xpos, double ypos) {
+  if (!gMouseTracking) return;
+
+  if (gFirstMouse) {
+    gLastX = xpos;
+    gLastY = ypos;
+    gFirstMouse = false;
+  }
+  var xoffset = xpos - gLastX;
+
+  // reversed since y-coordinates go from bottom to top
+  var yoffset = gLastY - ypos;
+  gLastX = xpos;
+  gLastY = ypos;
+
+  // change this value to your liking
+  var sensitivity = 0.1;
+  xoffset *= sensitivity;
+  yoffset *= sensitivity;
+  gYaw += xoffset;
+  gPitch += yoffset;
+
+  // make sure that when pitch is out of bounds, screen doesn't get flipped
+  if (gPitch > 89.0) {
+    gPitch = 89.0;
+  }
+  if (gPitch < -89.0) {
+    gPitch = -89.0;
+  }
+  var front = Vector3(
+    cos(radians(gYaw)) * cos(radians(gPitch)),
+    sin(radians(gPitch)),
+    sin(radians(gYaw)) * cos(radians(gPitch)),
+  );
+  gCameraDir = front.normalized();
+}
+
+// glfw: whenever the mouse scroll wheel scrolls, this callback is called
+// ----------------------------------------------------------------------
+void scrollCallback(
+    Pointer<GLFWwindow> window, double xoffset, double yoffset) {
+  print("heelll");
+  gFov -= yoffset;
+  if (gFov < 1.0) {
+    gFov = 1.0;
+  }
+  if (gFov > 45.0) {
+    gFov = 45.0;
+  }
+}
+
+void mouseButtonCallback(
+    Pointer<GLFWwindow> window, int button, int action, int mods) {
+  if (button == GLFW_MOUSE_BUTTON_1 && action == GLFW_PRESS) {
+    Pointer<Double> xpos = calloc<Double>();
+    Pointer<Double> ypos = calloc<Double>();
+    // , Pointer<Double> ypos
+    glfwGetCursorPos(window, xpos, ypos);
+    gLastX = xpos.value;
+    gLastY = ypos.value;
+
+    // Start tracking
+    gLastX = xpos.value;
+    gLastY = ypos.value;
+
+    xpos.callocFree();
+    ypos.callocFree();
+
+    gMouseTracking = true;
+  } else if (button == GLFW_MOUSE_BUTTON_1 && action == GLFW_RELEASE) {
+    gMouseTracking = false;
+  }
+}
+
 /// Configure view matrix using LookAt concept. +Y is Up.
+///
+/// Ex:
+///   ```Dart
+///   Vector3 target = Vector3(0.0, 0.0, 0.0); // Camera target
+///   Vector3 position = Vector3(3.0, 1.0, 3.0);// Camera position
+///   Matrix4 view = calcLookAt(position, target);
+///   ```
 ///
 /// [cpo] is camera position, [ctar] is look at target
 Matrix4 calcLookAt(Vector3 cpo, Vector3 ctar) {
