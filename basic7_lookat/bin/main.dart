@@ -7,9 +7,19 @@ import 'dart:io' as io;
 
 import 'shader_m.dart';
 
-// settings
+// -- View port
 const gScrWidth = 800;
 const gScrHeight = 600;
+
+// --- timing
+var gDeltaTime = 0.0;
+var gLastFrame = 0.0;
+
+// --- Camera
+Vector3 gCameraPos = Vector3(0.0, 0.0, 3.0);
+Vector3 gCameraDir = Vector3(0.0, 0.0, -1.0);
+Vector3 gCameraUp = Vector3(0.0, 1.0, 0.0);
+Vector3 gCameraSide = Vector3(1.0, 0, 0);
 
 enum RenderMode {
   wireFrame,
@@ -192,6 +202,13 @@ int main(List<String> arguments) {
   // ******* ---------------------------- *******
   while (glfwWindowShouldClose(window) == GLFW_FALSE) {
     // -----
+    // per-frame time logic (FPS)
+    // --------------------
+    var currentFrame = glfwGetTime();
+    gDeltaTime = currentFrame - gLastFrame;
+    gLastFrame = currentFrame;
+
+    // -----
     // input
     // -----
     processInput(window);
@@ -220,18 +237,12 @@ int main(List<String> arguments) {
     // model.translate(0.0, 1.0, 0.0);
 
     // --- View
-    // Camera target
-    // Vector3 target = Vector3(0.5, 0.0, 0.0);
-    // // Camera position
-    // Vector3 position = Vector3(3.0, 1.0, 3.0);
-    // var view = calcLookAt(position, target);
+    // Vector3 target = Vector3(0.0, 0.0, 0.0); // Camera target
+    // Vector3 position = Vector3(3.0, 1.0, 3.0);// Camera position
+    // // var view = calcLookAt(position, target);
+    // var view = calcLookAt(gCameraPos, target);
 
-    Vector3 up = Vector3(0.0, 1.0, 0.0);
-    // Camera target
-    Vector3 target = Vector3(0.0, 0.0, -0.5);
-    // Camera position
-    Vector3 position = Vector3(-1.0, -1.0, 5.0);
-    var view = makeViewMatrix(position, position + target, up);
+    var view = makeViewMatrix(gCameraPos, gCameraPos + gCameraDir, gCameraUp);
 
     // --- Projection
     var projection = makePerspectiveMatrix(
@@ -282,10 +293,32 @@ int main(List<String> arguments) {
 void processInput(Pointer<GLFWwindow> window) {
   if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
     glfwSetWindowShouldClose(window, GLFW_TRUE);
-  } else if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
+  } else if (glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS) {
     renderMode = RenderMode.wireFrame;
   } else if (glfwGetKey(window, GLFW_KEY_F) == GLFW_PRESS) {
     renderMode = RenderMode.filled;
+  }
+
+  var cameraSpeed = 2.5 * gDeltaTime;
+
+  if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
+    gCameraPos += gCameraDir.scaled(cameraSpeed);
+  }
+  if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
+    gCameraPos -= gCameraDir.scaled(cameraSpeed);
+  }
+  if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
+    gCameraPos -= gCameraDir.cross(gCameraUp).scaled(cameraSpeed);
+  }
+  if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
+    gCameraPos += gCameraDir.cross(gCameraUp).scaled(cameraSpeed);
+  }
+
+  if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) {
+    gCameraPos -= gCameraDir.cross(gCameraSide).scaled(cameraSpeed);
+  }
+  if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) {
+    gCameraPos += gCameraDir.cross(gCameraSide).scaled(cameraSpeed);
   }
 }
 
