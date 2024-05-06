@@ -407,7 +407,7 @@ void mouseButtonCallback(
   if (button == GLFW_MOUSE_BUTTON_1 && action == GLFW_PRESS) {
     Pointer<Double> xpos = calloc<Double>();
     Pointer<Double> ypos = calloc<Double>();
-    // , Pointer<Double> ypos
+
     glfwGetCursorPos(window, xpos, ypos);
     gLastX = xpos.value;
     gLastY = ypos.value;
