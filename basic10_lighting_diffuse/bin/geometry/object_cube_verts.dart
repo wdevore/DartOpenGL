@@ -5,21 +5,24 @@ import 'package:path/path.dart' as p;
 import 'dart:io' as io;
 
 import '../shader.dart';
-import 'base_loaders.dart';
+import 'loaders/base_loaders.dart';
 import 'base_object.dart';
-import 'loader_verts.dart';
+import 'loaders/loader_verts.dart';
 
 // Only vertices are loaded. Other properties are set elsewhere.
 class CubeVertsObject extends BaseObject {
   @override
   int configure(
-      String dataPath, String? vertexShaderSrc, String? fragShaderSrc) {
+    String dataPath,
+    String? vertexShaderSrc,
+    String? fragShaderSrc,
+  ) {
     this.vertexShaderSrc = vertexShaderSrc;
     this.fragShaderSrc = fragShaderSrc;
 
     BaseLoader loader = VertLoader();
 
-    int status = loader.load(dataPath, _addVertex, null, null);
+    int status = loader.load(dataPath, _addVertex, null, null, null);
 
     if (status != 0) {
       return status;
@@ -48,11 +51,11 @@ class CubeVertsObject extends BaseObject {
 
   int _loadShader() {
     // Default to standard colored cube
-    String vs = vertexShaderSrc ?? '1.colors.vs';
+    String vs = vertexShaderSrc ?? '1.light_cube.vs';
     vertexShaderSrc =
         p.join(io.Directory.current.path, 'resources/shaders/', vs);
 
-    String fs = fragShaderSrc ?? '1.colors.fs';
+    String fs = fragShaderSrc ?? '1.light_cube.fs';
     fragShaderSrc = p.join(io.Directory.current.path, 'resources/shaders/', fs);
 
     var vertexShader =
@@ -68,7 +71,7 @@ class CubeVertsObject extends BaseObject {
     return shader.id;
   }
 
-  void _buildBufferArrays() {
+  void _buildBufferArrays() async {
     vaoId = gldtGenVertexArrays(1)[0];
     vboId = gldtGenBuffers(1)[0];
 
@@ -91,21 +94,18 @@ class CubeVertsObject extends BaseObject {
     // note that this is allowed, the call to glVertexAttribPointer registered
     // VBO as the vertex attribute's bound vertex buffer object so afterwards we
     // can safely unbind
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindBuffer(GL_ARRAY_BUFFER, vboId);
 
     // You can unbind the VAO afterwards so other VAO calls won't accidentally
     // modify this VAO, but this rarely happens. Modifying other VAOs requires a
     // call to glBindVertexArray anyways so we generally don't unbind VAOs
     // (nor VBOs) when it's not directly necessary.
-    glBindVertexArray(0);
+    glBindVertexArray(vaoId);
   }
 
   @override
   void use() {
     shader.use();
-    // seeing as we only have a single VAO there's no need to bind it every
-    // time, but we'll do so to keep things a bit more organized
-    glBindVertexArray(vaoId);
   }
 
   @override
@@ -118,6 +118,7 @@ class CubeVertsObject extends BaseObject {
 
   @override
   void draw() {
+    glBindVertexArray(vaoId);
     glDrawArrays(GL_TRIANGLES, 0, 36);
   }
 

@@ -2,24 +2,27 @@ import 'dart:ffi';
 
 import 'package:glew/glew.dart';
 import 'package:path/path.dart' as p;
+import 'package:vector_math/vector_math.dart';
 import 'dart:io' as io;
 
 import '../shader.dart';
-import 'base_loaders.dart';
+import 'loaders/base_loaders.dart';
 import 'base_object.dart';
-import 'loader_verts.dart';
+import 'loaders/loader_sos.dart';
 
-// Only vertices are loaded. Other properties are set elsewhere.
-class CubeVertsObject extends BaseObject {
+class CubeBasic1Object extends BaseObject {
   @override
   int configure(
-      String dataPath, String? vertexShaderSrc, String? fragShaderSrc) {
+    String dataPath,
+    String? vertexShaderSrc,
+    String? fragShaderSrc,
+  ) {
     this.vertexShaderSrc = vertexShaderSrc;
     this.fragShaderSrc = fragShaderSrc;
 
-    BaseLoader loader = VertLoader();
+    BaseLoader loader = SoSLoader();
 
-    int status = loader.load(dataPath, _addVertex, null, null);
+    int status = loader.load(dataPath, _addVertex, _addColor, _addFace, null);
 
     if (status != 0) {
       return status;
@@ -41,28 +44,30 @@ class CubeVertsObject extends BaseObject {
     return 0;
   }
 
-  // The vertices are packed as "x,y,z"
+  void _addFace(int a, int b, int c) {
+    indices.addAll([a, b, c]);
+  }
+
+  // The vertices and colors packed as "x,y,z,r,g,b"
   void _addVertex(double x, double y, double z) {
     vertices.addAll([x, y, z]);
   }
 
+  void _addColor(double r, double g, double b) {
+    vertices.addAll([r, g, b]);
+  }
+
   int _loadShader() {
-    // Default to standard colored cube
-    String vs = vertexShaderSrc ?? '1.colors.vs';
+    String vs = vertexShaderSrc ?? '9.0.pos_color.vs';
     vertexShaderSrc =
         p.join(io.Directory.current.path, 'resources/shaders/', vs);
 
-    String fs = fragShaderSrc ?? '1.colors.fs';
+    String fs = fragShaderSrc ?? '9.0.pos_color.fs';
     fragShaderSrc = p.join(io.Directory.current.path, 'resources/shaders/', fs);
 
-    var vertexShader =
-        p.join(io.Directory.current.path, 'resources/shaders/', vs);
-    var fragmentShader =
-        p.join(io.Directory.current.path, 'resources/shaders/', fs);
-
     shader = Shader(
-      vertexFilePath: vertexShader,
-      fragmentFilePath: fragmentShader,
+      vertexFilePath: vertexShaderSrc,
+      fragmentFilePath: fragShaderSrc,
     );
 
     return shader.id;
@@ -71,6 +76,7 @@ class CubeVertsObject extends BaseObject {
   void _buildBufferArrays() {
     vaoId = gldtGenVertexArrays(1)[0];
     vboId = gldtGenBuffers(1)[0];
+    eboId = gldtGenBuffers(1)[0];
 
     // bind the Vertex Array Object first, then bind and set vertex buffer(s),
     // and then configure vertex attributes(s).
@@ -79,13 +85,25 @@ class CubeVertsObject extends BaseObject {
     glBindBuffer(GL_ARRAY_BUFFER, vboId);
     gldtBufferFloat(GL_ARRAY_BUFFER, vertices, GL_STATIC_DRAW); // glBufferData
 
+    // Attach EBO to VAO
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, eboId);
+    gldtBufferUint32(GL_ELEMENT_ARRAY_BUFFER, indices, GL_STATIC_DRAW);
+
     // --- position atribute ---
     gldtVertexAttribPointer(
-        0, 3, GL_FLOAT, GL_FALSE, 3 * sizeOf<Float>(), 0 * sizeOf<Float>());
+        0, 3, GL_FLOAT, GL_FALSE, 6 * sizeOf<Float>(), 0 * sizeOf<Float>());
     // Parameters:
     // 1: Because we specified "layout (location = 0)" in the vertex shader
     //    we use "0" to match location 0
     glEnableVertexAttribArray(0);
+
+    // --- color attribute ---
+    gldtVertexAttribPointer(
+        1, 3, GL_FLOAT, GL_FALSE, 6 * sizeOf<Float>(), 3 * sizeOf<Float>());
+    glEnableVertexAttribArray(1);
+
+    // remember: do NOT unbind the EBO while a VAO is active as the bound element buffer object IS stored in the VAO; keep the EBO bound.
+    //glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
     // ~~~~ VBO ~~~~
     // note that this is allowed, the call to glVertexAttribPointer registered
@@ -110,15 +128,16 @@ class CubeVertsObject extends BaseObject {
 
   @override
   void update(double currentFrame) {
-    // model.setIdentity();
-    // model.rotate(Vector3(0.0, 1.0, 0.0), radians(15.0) * currentFrame);
+    model = Matrix4.identity();
+    model.rotate(Vector3(0.0, 1.0, 0.0), radians(15.0) * currentFrame);
     // model.translate(0.0, 1.0, 0.0);
     setModelTransform();
   }
 
   @override
   void draw() {
-    glDrawArrays(GL_TRIANGLES, 0, 36);
+    gldtDrawElements(
+        GL_TRIANGLES, indices.length, GL_UNSIGNED_INT, 0 * sizeOf<Uint32>());
   }
 
   @override

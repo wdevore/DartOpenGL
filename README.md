@@ -1,6 +1,12 @@
 # DartOpenGL
 The project is a composition of Dart and OpenGL applications ranging from Neuromorphic to Games
 
+# learnopengl.com for Dart
+Contains code samples for all chapters of Learn OpenGL and [https://learnopengl.com](https://learnopengl.com). 
+
+# TODOs
+- Correctly define vertex winding to Face culling can be enabled.
+
 # Create new project
 You can create a new project via Flutter. Using *dart*
 

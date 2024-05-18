@@ -5,21 +5,24 @@ import 'package:path/path.dart' as p;
 import 'dart:io' as io;
 
 import '../shader.dart';
-import 'base_loaders.dart';
+import 'loaders/base_loaders.dart';
 import 'base_object.dart';
-import 'loader_verts.dart';
+import 'loaders/loader_verts_norms.dart';
 
-// Only vertices are loaded. Other properties are set elsewhere.
-class CubeVertsObject extends BaseObject {
+// Only vertices and Normals are loaded. Other properties are set elsewhere.
+class CubeVNObject extends BaseObject {
   @override
   int configure(
-      String dataPath, String? vertexShaderSrc, String? fragShaderSrc) {
+    String dataPath,
+    String? vertexShaderSrc,
+    String? fragShaderSrc,
+  ) {
     this.vertexShaderSrc = vertexShaderSrc;
     this.fragShaderSrc = fragShaderSrc;
 
-    BaseLoader loader = VertLoader();
+    BaseLoader loader = VertNormLoader();
 
-    int status = loader.load(dataPath, _addVertex, null, null);
+    int status = loader.load(dataPath, _addVertex, null, null, _addNormal);
 
     if (status != 0) {
       return status;
@@ -46,13 +49,17 @@ class CubeVertsObject extends BaseObject {
     vertices.addAll([x, y, z]);
   }
 
+  void _addNormal(double nx, double ny, double nz) {
+    vertices.addAll([nx, ny, nz]);
+  }
+
   int _loadShader() {
     // Default to standard colored cube
-    String vs = vertexShaderSrc ?? '1.colors.vs';
+    String vs = vertexShaderSrc ?? '2.1.basic_lighting.vs';
     vertexShaderSrc =
         p.join(io.Directory.current.path, 'resources/shaders/', vs);
 
-    String fs = fragShaderSrc ?? '1.colors.fs';
+    String fs = fragShaderSrc ?? '2.1.basic_lighting.fs';
     fragShaderSrc = p.join(io.Directory.current.path, 'resources/shaders/', fs);
 
     var vertexShader =
@@ -80,32 +87,36 @@ class CubeVertsObject extends BaseObject {
     gldtBufferFloat(GL_ARRAY_BUFFER, vertices, GL_STATIC_DRAW); // glBufferData
 
     // --- position atribute ---
+    // Size (3 floats) and Stride (6 floats = v(3) + n(3))
     gldtVertexAttribPointer(
-        0, 3, GL_FLOAT, GL_FALSE, 3 * sizeOf<Float>(), 0 * sizeOf<Float>());
+        0, 3, GL_FLOAT, GL_FALSE, 6 * sizeOf<Float>(), 0 * sizeOf<Float>());
     // Parameters:
     // 1: Because we specified "layout (location = 0)" in the vertex shader
     //    we use "0" to match location 0
     glEnableVertexAttribArray(0);
 
+    // --- Normal attribute ---
+    // Index (1) and Size (3 floats) and Stride (6) and Pos (3 float offset)
+    gldtVertexAttribPointer(
+        1, 3, GL_FLOAT, GL_FALSE, 6 * sizeOf<Float>(), 3 * sizeOf<Float>());
+    glEnableVertexAttribArray(1);
+
     // ~~~~ VBO ~~~~
     // note that this is allowed, the call to glVertexAttribPointer registered
     // VBO as the vertex attribute's bound vertex buffer object so afterwards we
     // can safely unbind
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindBuffer(GL_ARRAY_BUFFER, vboId);
 
     // You can unbind the VAO afterwards so other VAO calls won't accidentally
     // modify this VAO, but this rarely happens. Modifying other VAOs requires a
     // call to glBindVertexArray anyways so we generally don't unbind VAOs
     // (nor VBOs) when it's not directly necessary.
-    glBindVertexArray(0);
+    glBindVertexArray(vaoId);
   }
 
   @override
   void use() {
     shader.use();
-    // seeing as we only have a single VAO there's no need to bind it every
-    // time, but we'll do so to keep things a bit more organized
-    glBindVertexArray(vaoId);
   }
 
   @override
@@ -118,6 +129,7 @@ class CubeVertsObject extends BaseObject {
 
   @override
   void draw() {
+    glBindVertexArray(vaoId);
     glDrawArrays(GL_TRIANGLES, 0, 36);
   }
 
