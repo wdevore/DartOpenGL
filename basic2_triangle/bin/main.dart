@@ -197,7 +197,11 @@ int main(List<String> arguments) {
     // mouse moved etc.)
     // -----------------------------------------------------------------------
     glfwSwapBuffers(window);
-    glfwPollEvents();
+    try {
+      glfwPollEvents();
+    } catch (e) {
+      print(e);
+    }
   }
 
   // ------------------------------------------------------------------------

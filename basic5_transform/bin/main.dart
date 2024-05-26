@@ -66,11 +66,6 @@ int main(List<String> arguments) {
     0.0, 0.5, 0.0, 0.0, 0.0, 1.0 // top
   ];
 
-  var indices = [
-    0, 1, 3, // first triangle
-    1, 2, 3, // second triangle
-  ];
-
   var vao = gldtGenVertexArrays(1)[0];
   var vbo = gldtGenBuffers(1)[0];
   // var ebo = gldtGenBuffers(1)[0];
@@ -166,7 +161,11 @@ int main(List<String> arguments) {
     // mouse moved etc.)
     // -----------------------------------------------------------------------
     glfwSwapBuffers(window);
-    glfwPollEvents();
+    try {
+      glfwPollEvents();
+    } catch (e) {
+      print(e);
+    }
   }
 
   // ------------------------------------------------------------------------

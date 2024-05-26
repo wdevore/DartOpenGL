@@ -55,7 +55,11 @@ int main(List<String> arguments) {
     // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
     // -------------------------------------------------------------------------------
     glfwSwapBuffers(window);
-    glfwPollEvents();
+    try {
+      glfwPollEvents();
+    } catch (e) {
+      print(e);
+    }
   }
 
   // ------------------------------------------------------------------
