@@ -1,5 +1,5 @@
 # DartOpenGL
-The project is a composition of Dart and OpenGL applications ranging from Neuromorphic to Games
+The project is a composition of Dart and OpenGL applications ranging from Neuromorphic to Games. It uses GLFW.
 
 # learnopengl.com for Dart
 Contains code samples for all chapters of Learn OpenGL and [https://learnopengl.com](https://learnopengl.com). 
